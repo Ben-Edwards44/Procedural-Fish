@@ -1,4 +1,5 @@
 from math import sqrt
+from random import uniform
 
 
 class Vec2:
@@ -15,17 +16,29 @@ class Vec2:
     def __mul__(self, scalar):
         return Vec2(self.x * scalar, self.y * scalar)
     
+    def __truediv__(self, scalar):
+        return Vec2(self.x / scalar, self.y / scalar)
+    
     def get_int_pos(self):
         return (int(self.x), int(self.y))
 
+    def mag_sq(self):
+        return self.x * self.x + self.y * self.y
+
     def mag(self):
-        return sqrt(self.x * self.x + self.y * self.y)
+        return sqrt(self.mag_sq())
     
     def set_mag(self, desired_mag):
         scale = desired_mag / self.mag()
         new_vec = self * scale
 
         return new_vec
+    
+    def limit_mag(self, limit):
+        if self.mag() > limit:
+            return self.set_mag(limit)
+        else:
+            return self
     
     def rot90(self, positive):
         if positive:
@@ -37,3 +50,10 @@ class Vec2:
         new_y = self.x * mult
 
         return Vec2(new_x, new_y)
+    
+
+def rand_vec(min, max):
+    x = uniform(min, max)
+    y = uniform(min, max)
+
+    return Vec2(x, y)
