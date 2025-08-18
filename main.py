@@ -16,7 +16,16 @@ def boid_test():
     boids = [boid.Boid(vector.rand_vec(0, 500), 50) for _ in range(40)]
     boid.set_all_boids(boids)
 
+    c = pygame.time.Clock()
+    pn = 10000
     while True:
+        c.tick()
+        n = c.get_fps()
+
+        if n < pn and n > 0:
+            print(n)
+            pn = n
+
         boid.update_all_boids(boids)
 
         window.fill((0, 0, 0))
@@ -40,15 +49,21 @@ def boid_test():
 
 
 def main():
-    boid_test()
+    #boid_test()
 
     f = fish.PlayerFish(window, vector.Vec2(250, 250))
+    other = fish.create_non_player_fish(window, 50)
 
     while True:
         f.update()
+        fish.update_all_non_player_fish(other)
 
         window.fill((0, 0, 0))
+
         f.draw()
+        for i in other:
+            i.draw()
+        
         pygame.display.update()
 
         for e in pygame.event.get():
