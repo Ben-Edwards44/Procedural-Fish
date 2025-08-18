@@ -91,8 +91,13 @@ class TailFin:
     SIZES = [1, 1.5, 2, 2.5]
     LENGTH_RATIO = 0.2
 
-    def __init__(self, trail_point):
-        self.trail_point = trail_point
+    COLOUR = (0, 0, 255)
+
+    def __init__(self, window, head_point):
+        self.window = window
+        self.head_point = head_point
+
+        self.fin_points = self.create_fin_points()
 
     def get_point_radius(self):
         total_length = TailFin.LENGTH_RATIO * Fish.LENGTH
@@ -102,11 +107,15 @@ class TailFin:
 
     def create_fin_points(self):
         radius = self.get_point_radius()
-        points = create_horizontal_trail_points(self.trail_point, len(TailFin.SIZES), radius)
+        point_string = TrailPointString(self.window, self.head_point, TailFin.SIZES, radius, TailFin.COLOUR)
 
-        return points
+        return point_string
     
+    def update(self):
+        self.fin_points.update()
 
+    def draw(self):
+        self.fin_points.draw()
 
 
 class Fish:
@@ -122,6 +131,7 @@ class Fish:
 
         self.head_point = self.create_head_point(pos)
         self.body = self.create_body()
+        self.tail_fin = self.create_tail_fin()
 
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
@@ -133,6 +143,11 @@ class Fish:
         body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.colour)
 
         return body
+    
+    def create_tail_fin(self):
+        tail_fin = TailFin(self.window, self.body.trail_points[-1])
+
+        return tail_fin
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -142,10 +157,12 @@ class Fish:
     def draw(self):
         self.draw_head()
         self.body.draw()
+        self.tail_fin.draw()
 
     def update(self):
         self.update_head()
         self.body.update()
+        self.tail_fin.update()
 
 
 class PlayerFish(Fish):
