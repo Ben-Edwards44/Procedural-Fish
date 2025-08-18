@@ -36,19 +36,26 @@ class TrailPoint(HeadPoint):
 
 
 class Fish:
-    SIZES = [4, 5, 6, 7, 8, 7, 6, 5, 4]
+    SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
+    LENGTH = 42
+
     DEFAULT_COLOUR = (255, 255, 255)
 
     def __init__(self, window, pos):
         self.window = window
 
-        self.head_point = HeadPoint(window, pos, 10)
+        self.head_point = self.create_head_point(pos)
         self.trail_points = self.create_trail_points()
 
         self.colour = Fish.DEFAULT_COLOUR
 
+    def create_head_point(self, pos):
+        num_radii = len(Fish.SIZES)
+        head_radius = Fish.LENGTH / num_radii
+
+        return HeadPoint(self.window, pos, head_radius)
+
     def create_trail_points(self):
-        #TODO: const num_points
         parent = self.head_point
         num_points = len(Fish.SIZES)
 
