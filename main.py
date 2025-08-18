@@ -14,9 +14,7 @@ window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 def main():
     f = fish.PlayerFish(window, vector.Vec2(250, 250))
 
-    clock = pygame.time.Clock()
     while True:
-        clock.tick(120)
         f.update()
 
         window.fill((0, 0, 0))

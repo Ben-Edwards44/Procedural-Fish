@@ -55,23 +55,23 @@ class Fish:
         #add both sides of the head
         head_cw, head_acw = self.get_cw_acw_points(self.head_point.pos, spine_vecs[0], Fish.SIZES[0])
 
-        cw_points = [head_cw.get_pos()]
-        acw_points = [head_acw.get_pos()]
+        cw_points = [head_cw.get_int_pos()]
+        acw_points = [head_acw.get_int_pos()]
 
         for i, x in enumerate(spine_vecs):
             anchor = self.trail_points[i].pos
 
             cw, acw = self.get_cw_acw_points(anchor, x, Fish.SIZES[i])
 
-            cw_points.append(cw.get_pos())
-            acw_points.append(acw.get_pos())
+            cw_points.append(cw.get_int_pos())
+            acw_points.append(acw.get_int_pos())
 
         pygame.draw.polygon(self.window, (255, 255, 255), cw_points + acw_points[::-1])
 
     def draw_head(self):
         radius = Fish.SIZES[0]
 
-        pygame.draw.circle(self.window, (255, 255, 255), self.head_point.pos.get_pos(), radius)
+        pygame.draw.circle(self.window, (255, 255, 255), self.head_point.pos.get_int_pos(), radius)
 
     def draw(self):
         self.draw_head()
@@ -102,8 +102,8 @@ class HeadPoint:
         self.pos = pos
         self.radius = radius
 
-    def draw(self):
-        center = (int(self.pos.x), int(self.pos.y))
+    def debug_draw(self):
+        center = self.pos.get_int_pos()
 
         pygame.draw.circle(self.window, (255, 0, 0), center, 4)
 
@@ -121,7 +121,7 @@ class TrailPoint(HeadPoint):
 
         self.pos = self.pos + step
 
-    def draw(self):
-        center = (int(self.pos.x), int(self.pos.y))
+    def debug_draw(self):
+        center = self.pos.get_int_pos()
 
         pygame.draw.circle(self.window, (0, 255, 0), center, 4)

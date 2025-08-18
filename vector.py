@@ -15,8 +15,8 @@ class Vec2:
     def __mul__(self, scalar):
         return Vec2(self.x * scalar, self.y * scalar)
     
-    def get_pos(self):
-        return (self.x, self.y)
+    def get_int_pos(self):
+        return (int(self.x), int(self.y))
 
     def mag(self):
         return sqrt(self.x * self.x + self.y * self.y)
