@@ -37,12 +37,15 @@ class TrailPoint(HeadPoint):
 
 class Fish:
     SIZES = [4, 5, 6, 7, 8, 7, 6, 5, 4]
+    DEFAULT_COLOUR = (255, 255, 255)
 
     def __init__(self, window, pos):
         self.window = window
 
         self.head_point = HeadPoint(window, pos, 10)
         self.trail_points = self.create_trail_points()
+
+        self.colour = Fish.DEFAULT_COLOUR
 
     def create_trail_points(self):
         #TODO: const num_points
@@ -98,12 +101,12 @@ class Fish:
             cw_points.append(cw.get_int_pos())
             acw_points.append(acw.get_int_pos())
 
-        pygame.draw.polygon(self.window, (255, 255, 255), cw_points + acw_points[::-1])
+        pygame.draw.polygon(self.window, self.colour, cw_points + acw_points[::-1])
 
     def draw_head(self):
         radius = Fish.SIZES[0]
 
-        pygame.draw.circle(self.window, (255, 255, 255), self.head_point.pos.get_int_pos(), radius)
+        pygame.draw.circle(self.window, self.colour, self.head_point.pos.get_int_pos(), radius)
 
     def draw(self):
         self.draw_head()
@@ -115,8 +118,25 @@ class Fish:
 
 
 class PlayerFish(Fish):
+    COLOUR = (255, 0, 0)
+
     def __init__(self, window, pos):
         super().__init__(window, pos)
+
+        self.colour = PlayerFish.COLOUR
+
+        self.dummy_boid = self.create_dummy_boid()
+
+    def create_dummy_boid(self):
+        #create a boid object with same pos and vel as fish so non player fish interact with player fish
+        boid_obj = boid.Boid(self.head_point.pos, 0)
+
+        return boid_obj
+    
+    def update_dummy_boid(self, head_step):
+        #ensure dummy boids attrs match the actual fish
+        self.dummy_boid.pos = self.head_point.pos
+        self.dummy_boid.vel = head_step
 
     def update_head(self):
         #TODO: const step mag
@@ -125,6 +145,8 @@ class PlayerFish(Fish):
         step = step_dir.set_mag(0.5)
 
         self.head_point.pos = self.head_point.pos + step
+
+        self.update_dummy_boid(step)
 
 
 class NonPlayerFish(Fish):
@@ -140,21 +162,22 @@ class NonPlayerFish(Fish):
         self.head_point.pos = self.boid.pos
 
 
-def set_all_fish_boids(all_fish):
+def set_all_fish_boids(all_fish, player_fish):
     #to be called once all fish have been initialised
     boids = [i.boid for i in all_fish]
+    boids.append(player_fish.dummy_boid)
 
     boid.set_all_boids(boids)
 
 
-def create_non_player_fish(window, num):
+def create_non_player_fish(window, num, player_fish):
     #TODO: const min/max
     all_fish = []
     for _ in range(num):
         fish = NonPlayerFish(window, vector.rand_vec(0, 500))
         all_fish.append(fish)
 
-    set_all_fish_boids(all_fish)
+    set_all_fish_boids(all_fish, player_fish)
 
     return all_fish
 

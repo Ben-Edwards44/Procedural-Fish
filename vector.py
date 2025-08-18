@@ -7,6 +7,9 @@ class Vec2:
         self.x = x
         self.y = y
 
+    def __repr__(self):
+        return f"<{self.x}, {self.y}>"
+
     def __add__(self, other_vec):
         return Vec2(self.x + other_vec.x, self.y + other_vec.y)
     

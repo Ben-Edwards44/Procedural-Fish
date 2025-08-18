@@ -52,7 +52,7 @@ def main():
     #boid_test()
 
     f = fish.PlayerFish(window, vector.Vec2(250, 250))
-    other = fish.create_non_player_fish(window, 50)
+    other = fish.create_non_player_fish(window, 10, f)
 
     while True:
         f.update()
