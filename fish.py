@@ -4,23 +4,16 @@ import pygame
 
 
 class HeadPoint:
-    def __init__(self, window, pos, radius):
-        self.window = window
-
+    def __init__(self, pos, radius):
         self.pos = pos
         self.radius = radius
 
-    def debug_draw(self):
-        center = self.pos.get_int_pos()
-
-        pygame.draw.circle(self.window, (255, 0, 0), center, 4)
-
 
 class TrailPoint(HeadPoint):
-    def __init__(self, window, pos, radius, parent):
+    def __init__(self, pos, radius, parent):
         self.parent = parent
 
-        super().__init__(window, pos, radius)
+        super().__init__(pos, radius)
 
     def update_pos(self):
         vec_to_parent = self.parent.pos - self.pos
@@ -29,10 +22,25 @@ class TrailPoint(HeadPoint):
 
         self.pos = self.pos + step
 
-    def debug_draw(self):
-        center = self.pos.get_int_pos()
 
-        pygame.draw.circle(self.window, (0, 255, 0), center, 4)
+class TailFin:
+    SIZES = [1, 1.5, 2, 2.5]
+    LENGTH_RATIO = 0.2
+
+    def __init__(self, trail_point):
+        self.trail_point = trail_point
+
+    def get_point_radius(self):
+        total_length = TailFin.LENGTH_RATIO * Fish.LENGTH
+        num_radii = len(TailFin.SIZES)
+
+        return total_length / num_radii
+
+    def create_fin_points(self):
+        radius = self.get_point_radius()
+        points = create_horizontal_trail_points(self.trail_point, len(TailFin.SIZES), radius)
+
+        return points
 
 
 class Fish:
@@ -53,19 +61,10 @@ class Fish:
         num_radii = len(Fish.SIZES)
         head_radius = Fish.LENGTH / num_radii
 
-        return HeadPoint(self.window, pos, head_radius)
+        return HeadPoint(pos, head_radius)
 
     def create_trail_points(self):
-        parent = self.head_point
-        num_points = len(Fish.SIZES)
-
-        trail_points = []
-        for i in range(num_points):
-            offset = vector.Vec2(-self.head_point.radius, 0)
-            new_point = TrailPoint(self.window, parent.pos + offset, self.head_point.radius, parent)
-            trail_points.append(new_point)
-
-            parent = new_point
+        trail_points = create_horizontal_trail_points(self.head_point, len(Fish.SIZES), self.head_point.radius)
 
         return trail_points
     
@@ -167,6 +166,20 @@ class NonPlayerFish(Fish):
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish
         self.head_point.pos = self.boid.pos
+
+
+def create_horizontal_trail_points(initial_parent, num_points, radius):
+    parent = initial_parent
+
+    trail_points = []
+    for _ in range(num_points):
+        offset = vector.Vec2(-radius, 0)
+        new_point = TrailPoint(parent.pos + offset, radius, parent)
+        trail_points.append(new_point)
+
+        parent = new_point
+
+    return trail_points
 
 
 def set_all_fish_boids(all_fish, player_fish):
