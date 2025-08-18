@@ -3,6 +3,8 @@ import pygame
 
 
 class Fish:
+    SIZES = [4, 5, 6, 7, 8, 7, 6, 5, 4]
+
     def __init__(self, window, pos):
         self.window = window
         self.pos = pos
@@ -11,8 +13,9 @@ class Fish:
         self.trail_points = self.create_trail_points()
 
     def create_trail_points(self):
+        #TODO: const num_points
         parent = self.head_point
-        num_points = 10
+        num_points = len(Fish.SIZES)
 
         trail_points = []
         for i in range(num_points):
@@ -28,11 +31,51 @@ class Fish:
         for i in self.trail_points:
             i.update_pos()
 
-    def draw(self):
-        self.head_point.draw()
+    def get_spine_vecs(self):
+        spine_vecs = [self.head_point.pos - self.trail_points[0].pos]
+        for i, x in enumerate(self.trail_points):
+            if i == 0:
+                continue
 
-        for i in self.trail_points:
-            i.draw()
+            spine_vecs.append(self.trail_points[i - 1].pos - x.pos)
+
+        return spine_vecs
+    
+    def get_cw_acw_points(self, anchor, spine_vec, radius):
+        scaled_vec = spine_vec.set_mag(radius)
+
+        cw = anchor + scaled_vec.rot90(False)
+        acw = anchor + scaled_vec.rot90(True)
+
+        return cw, acw
+
+    def draw_body(self):
+        spine_vecs = self.get_spine_vecs()
+
+        #add both sides of the head
+        head_cw, head_acw = self.get_cw_acw_points(self.head_point.pos, spine_vecs[0], Fish.SIZES[0])
+
+        cw_points = [head_cw.get_pos()]
+        acw_points = [head_acw.get_pos()]
+
+        for i, x in enumerate(spine_vecs):
+            anchor = self.trail_points[i].pos
+
+            cw, acw = self.get_cw_acw_points(anchor, x, Fish.SIZES[i])
+
+            cw_points.append(cw.get_pos())
+            acw_points.append(acw.get_pos())
+
+        pygame.draw.polygon(self.window, (255, 255, 255), cw_points + acw_points[::-1])
+
+    def draw_head(self):
+        radius = Fish.SIZES[0]
+
+        pygame.draw.circle(self.window, (255, 255, 255), self.head_point.pos.get_pos(), radius)
+
+    def draw(self):
+        self.draw_head()
+        self.draw_body()
 
     def update(self):
         self.update_head()
@@ -44,6 +87,7 @@ class PlayerFish(Fish):
         super().__init__(window, pos)
 
     def update_head(self):
+        #TODO: const step mag
         mouse_pos = vector.Vec2(*pygame.mouse.get_pos())
         step_dir = mouse_pos - self.head_point.pos
         step = step_dir.set_mag(0.5)

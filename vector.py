@@ -14,6 +14,9 @@ class Vec2:
     
     def __mul__(self, scalar):
         return Vec2(self.x * scalar, self.y * scalar)
+    
+    def get_pos(self):
+        return (self.x, self.y)
 
     def mag(self):
         return sqrt(self.x * self.x + self.y * self.y)
@@ -23,3 +26,14 @@ class Vec2:
         new_vec = self * scale
 
         return new_vec
+    
+    def rot90(self, positive):
+        if positive:
+            mult = 1
+        else:
+            mult = -1
+
+        new_x = -self.y * mult
+        new_y = self.x * mult
+
+        return Vec2(new_x, new_y)
