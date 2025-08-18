@@ -23,54 +23,27 @@ class TrailPoint(HeadPoint):
         self.pos = self.pos + step
 
 
-class TailFin:
-    SIZES = [1, 1.5, 2, 2.5]
-    LENGTH_RATIO = 0.2
-
-    def __init__(self, trail_point):
-        self.trail_point = trail_point
-
-    def get_point_radius(self):
-        total_length = TailFin.LENGTH_RATIO * Fish.LENGTH
-        num_radii = len(TailFin.SIZES)
-
-        return total_length / num_radii
-
-    def create_fin_points(self):
-        radius = self.get_point_radius()
-        points = create_horizontal_trail_points(self.trail_point, len(TailFin.SIZES), radius)
-
-        return points
-
-
-class Fish:
-    SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
-    LENGTH = 42
-
-    DEFAULT_COLOUR = (255, 255, 255)
-
-    def __init__(self, window, pos):
+class TrailPointString:
+    def __init__(self, window, head_point, sizes, radius, colour):
         self.window = window
+        self.head_point = head_point
+        self.sizes = sizes
+        self.colour = colour
 
-        self.head_point = self.create_head_point(pos)
-        self.trail_points = self.create_trail_points()
+        self.trail_points = self.create_horizontal_points(radius)
 
-        self.colour = Fish.DEFAULT_COLOUR
+    def create_horizontal_points(self, radius):
+        parent = self.head_point
 
-    def create_head_point(self, pos):
-        num_radii = len(Fish.SIZES)
-        head_radius = Fish.LENGTH / num_radii
+        trail_points = []
+        for _ in self.sizes:
+            offset = vector.Vec2(-radius, 0)
+            new_point = TrailPoint(parent.pos + offset, radius, parent)
+            trail_points.append(new_point)
 
-        return HeadPoint(pos, head_radius)
-
-    def create_trail_points(self):
-        trail_points = create_horizontal_trail_points(self.head_point, len(Fish.SIZES), self.head_point.radius)
+            parent = new_point
 
         return trail_points
-    
-    def update_trail(self):
-        for i in self.trail_points:
-            i.update_pos()
 
     def get_spine_vecs(self):
         spine_vecs = [self.head_point.pos - self.trail_points[0].pos]
@@ -90,11 +63,11 @@ class Fish:
 
         return cw, acw
 
-    def draw_body(self):
+    def draw(self):
         spine_vecs = self.get_spine_vecs()
 
         #add both sides of the head
-        head_cw, head_acw = self.get_cw_acw_points(self.head_point.pos, spine_vecs[0], Fish.SIZES[0])
+        head_cw, head_acw = self.get_cw_acw_points(self.head_point.pos, spine_vecs[0], self.sizes[0])
 
         cw_points = [head_cw.get_int_pos()]
         acw_points = [head_acw.get_int_pos()]
@@ -102,12 +75,64 @@ class Fish:
         for i, x in enumerate(spine_vecs):
             anchor = self.trail_points[i].pos
 
-            cw, acw = self.get_cw_acw_points(anchor, x, Fish.SIZES[i])
+            cw, acw = self.get_cw_acw_points(anchor, x, self.sizes[i])
 
             cw_points.append(cw.get_int_pos())
             acw_points.append(acw.get_int_pos())
 
         pygame.draw.polygon(self.window, self.colour, cw_points + acw_points[::-1])
+
+    def update(self):
+        for i in self.trail_points:
+            i.update_pos()
+
+
+class TailFin:
+    SIZES = [1, 1.5, 2, 2.5]
+    LENGTH_RATIO = 0.2
+
+    def __init__(self, trail_point):
+        self.trail_point = trail_point
+
+    def get_point_radius(self):
+        total_length = TailFin.LENGTH_RATIO * Fish.LENGTH
+        num_radii = len(TailFin.SIZES)
+
+        return total_length / num_radii
+
+    def create_fin_points(self):
+        radius = self.get_point_radius()
+        points = create_horizontal_trail_points(self.trail_point, len(TailFin.SIZES), radius)
+
+        return points
+    
+
+
+
+class Fish:
+    SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
+    LENGTH = 42
+
+    DEFAULT_COLOUR = (255, 255, 255)
+
+    def __init__(self, window, pos):
+        self.window = window
+
+        self.colour = Fish.DEFAULT_COLOUR
+
+        self.head_point = self.create_head_point(pos)
+        self.body = self.create_body()
+
+    def create_head_point(self, pos):
+        num_radii = len(Fish.SIZES)
+        head_radius = Fish.LENGTH / num_radii
+
+        return HeadPoint(pos, head_radius)
+    
+    def create_body(self):
+        body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.colour)
+
+        return body
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -116,11 +141,11 @@ class Fish:
 
     def draw(self):
         self.draw_head()
-        self.draw_body()
+        self.body.draw()
 
     def update(self):
         self.update_head()
-        self.update_trail()
+        self.body.update()
 
 
 class PlayerFish(Fish):
@@ -130,6 +155,7 @@ class PlayerFish(Fish):
         super().__init__(window, pos)
 
         self.colour = PlayerFish.COLOUR
+        self.body.colour = PlayerFish.COLOUR
 
         self.dummy_boid = self.create_dummy_boid()
 
@@ -166,20 +192,6 @@ class NonPlayerFish(Fish):
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish
         self.head_point.pos = self.boid.pos
-
-
-def create_horizontal_trail_points(initial_parent, num_points, radius):
-    parent = initial_parent
-
-    trail_points = []
-    for _ in range(num_points):
-        offset = vector.Vec2(-radius, 0)
-        new_point = TrailPoint(parent.pos + offset, radius, parent)
-        trail_points.append(new_point)
-
-        parent = new_point
-
-    return trail_points
 
 
 def set_all_fish_boids(all_fish, player_fish):
