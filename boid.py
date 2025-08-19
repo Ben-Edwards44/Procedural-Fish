@@ -70,7 +70,6 @@ class Boid:
         if len(neighbours) == 0:
             return
 
-        #TODO: const weights
         align_step = self.alignment(neighbours)
         cohesion_step = self.cohesion(neighbours)
         seperation_step = self.seperation(neighbours)
