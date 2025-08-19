@@ -34,19 +34,5 @@ def boid_debug():
                 quit()
 
 
-def fps_debug():
-    x = 0
-    while True:
-        x += 0.1
-
-        window.fill((0, 0, 0))
-        pygame.draw.circle(window, (255, 255, 255), (int(x), 250), 5)
-        pygame.display.update()
-
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                quit()
-
-
 if __name__ == "__main__":
-    fps_debug()
+    boid_debug()

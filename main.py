@@ -6,6 +6,8 @@ import pygame
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
 
+FPS = 60
+
 
 pygame.init()
 window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -31,7 +33,10 @@ def main():
     player_fish = fish.PlayerFish(window, vector.Vec2(250, 250))
     non_player_fish = fish.create_non_player_fish(window, 30, player_fish)
 
+    clock = pygame.time.Clock()
     while True:
+        clock.tick(FPS)
+
         update(player_fish, non_player_fish)
         draw(player_fish, non_player_fish)
 
