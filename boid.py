@@ -79,12 +79,8 @@ class Boid:
 
         self.new_vel = (self.vel + acc).set_mag(Boid.SPEED)
 
-    def update_vel(self):
-        self.vel = self.new_vel
-
     def update(self):
-        self.update_new_vel()
-
+        self.vel = self.new_vel
         self.pos = self.pos + self.vel
 
 
@@ -95,7 +91,7 @@ def set_all_boids(all_boids):
 
 def update_all_boids(all_boids):
     for i in all_boids:
-        i.update()
+        i.update_new_vel()
 
     for i in all_boids:
-        i.update_vel()
+        i.update()
