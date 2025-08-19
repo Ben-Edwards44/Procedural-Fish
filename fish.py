@@ -1,6 +1,7 @@
 import boid
 import vector
 import pygame
+from random import uniform
 
 
 class HeadPoint:
@@ -166,6 +167,7 @@ class Fish:
 
 
 class PlayerFish(Fish):
+    SPEED = 0.6
     COLOUR = (255, 0, 0)
 
     def __init__(self, window, pos):
@@ -188,10 +190,9 @@ class PlayerFish(Fish):
         self.dummy_boid.vel = head_step
 
     def update_head(self):
-        #TODO: const step mag
         mouse_pos = vector.Vec2(*pygame.mouse.get_pos())
         step_dir = mouse_pos - self.head_point.pos
-        step = step_dir.set_mag(0.5)
+        step = step_dir.set_mag(PlayerFish.SPEED)
 
         self.head_point.pos = self.head_point.pos + step
 
@@ -220,10 +221,15 @@ def set_all_fish_boids(all_fish, player_fish):
 
 
 def create_non_player_fish(window, num, player_fish):
-    #TODO: const min/max
+    width = window.get_width()
+    height = window.get_height()
+
     all_fish = []
     for _ in range(num):
-        fish = NonPlayerFish(window, vector.rand_vec(0, 500))
+        pos_x = uniform(0, width)
+        pos_y = uniform(0, height)
+
+        fish = NonPlayerFish(window, vector.Vec2(pos_x, pos_y))
         all_fish.append(fish)
 
     set_all_fish_boids(all_fish, player_fish)
