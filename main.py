@@ -1,5 +1,4 @@
 import fish
-import boid
 import vector
 import pygame
 
@@ -12,63 +11,34 @@ pygame.init()
 window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 
-def boid_test():
-    boids = [boid.Boid(vector.rand_vec(0, 500), 50) for _ in range(40)]
-    boid.set_all_boids(boids)
+def update(player_fish, non_player_fish):
+    player_fish.update()
+    fish.update_all_non_player_fish(non_player_fish)
 
-    c = pygame.time.Clock()
-    pn = 10000
-    while True:
-        c.tick()
-        n = c.get_fps()
 
-        if n < pn and n > 0:
-            print(n)
-            pn = n
+def draw(player_fish, non_player_fish):
+    window.fill((0, 0, 0))
 
-        boid.update_all_boids(boids)
+    for i in non_player_fish:
+        i.draw()
 
-        window.fill((0, 0, 0))
-        for i in boids:
-            if i.pos.x < 0:
-                i.pos.x = 500
-            elif i.pos.x > 500:
-                i.pos.x = 0
+    player_fish.draw()
 
-            if i.pos.y < 0:
-                i.pos.y = 500
-            elif i.pos.y > 500:
-                i.pos.y = 0
-
-            pygame.draw.circle(window, (255, 255, 255), i.pos.get_int_pos(), 4)
-        pygame.display.update()
-
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                quit()
+    pygame.display.update()
 
 
 def main():
-    #boid_test()
-
-    f = fish.PlayerFish(window, vector.Vec2(250, 250))
-    other = fish.create_non_player_fish(window, 10, f)
+    player_fish = fish.PlayerFish(window, vector.Vec2(250, 250))
+    non_player_fish = fish.create_non_player_fish(window, 30, player_fish)
 
     while True:
-        f.update()
-        fish.update_all_non_player_fish(other)
-
-        window.fill((0, 0, 0))
-
-        f.draw()
-        for i in other:
-            i.draw()
-        
-        pygame.display.update()
+        update(player_fish, non_player_fish)
+        draw(player_fish, non_player_fish)
 
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 quit()
 
 
-main()
+if __name__ == "__main__":
+    main()
