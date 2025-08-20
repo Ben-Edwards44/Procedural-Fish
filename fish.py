@@ -90,6 +90,38 @@ class TrailPointString:
             i.update_pos()
 
 
+class Eyes:
+    LENGTH_RATIO = 0.6
+
+    ANGLE = math.pi / 3
+
+    COLOUR = (0, 0, 255)
+
+    RADIUS = 2
+
+    def __init__(self, window, head_point, first_trail_point):
+        self.window = window
+        self.head_point = head_point
+        self.first_trail_point = first_trail_point
+
+        self.dist_along = self.first_trail_point.size * Eyes.LENGTH_RATIO
+
+    def get_pos(self):
+        pointing_dir = self.first_trail_point.get_direction()
+        scaled_vec = pointing_dir.set_mag(self.dist_along)
+
+        eye_pos1 = self.head_point.pos + scaled_vec.rot(Eyes.ANGLE)
+        eye_pos2 = self.head_point.pos + scaled_vec.rot(-Eyes.ANGLE)
+
+        return eye_pos1, eye_pos2
+    
+    def draw(self):
+        pos1, pos2 = self.get_pos()
+
+        pygame.draw.circle(self.window, Eyes.COLOUR, pos1.get_int_pos(), Eyes.RADIUS)
+        pygame.draw.circle(self.window, Eyes.COLOUR, pos2.get_int_pos(), Eyes.RADIUS)
+
+
 class TailFin:
     SIZES = [1, 1.5, 2, 2.5]
     LENGTH_RATIO = 0.2
@@ -190,6 +222,7 @@ class Fish:
         self.body = self.create_body()
         self.tail_fin = self.create_tail_fin()
         self.left_fin, self.right_fin = self.create_body_fins()
+        self.eyes = self.create_eyes()
 
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
@@ -215,6 +248,11 @@ class Fish:
         right_fin = BodyFin(self.window, anchor, rotation, True)
 
         return left_fin, right_fin
+    
+    def create_eyes(self):
+        eyes = Eyes(self.window, self.head_point, self.body.trail_points[0])
+
+        return eyes
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -227,6 +265,7 @@ class Fish:
         self.left_fin.draw()
         self.right_fin.draw()
         self.body.draw()
+        self.eyes.draw()
 
     def update(self):
         self.update_head()
