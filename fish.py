@@ -1,5 +1,7 @@
 import boid
 import vector
+
+import math
 import pygame
 from random import uniform
 
@@ -15,6 +17,10 @@ class TrailPoint(HeadPoint):
         self.parent = parent
 
         super().__init__(pos, radius)
+
+    def get_direction(self):
+        #get the direction this point is pointing in
+        return self.parent.pos - self.pos
 
     def update_pos(self):
         vec_to_parent = self.parent.pos - self.pos
@@ -47,14 +53,7 @@ class TrailPointString:
         return trail_points
 
     def get_spine_vecs(self):
-        spine_vecs = [self.head_point.pos - self.trail_points[0].pos]
-        for i, x in enumerate(self.trail_points):
-            if i == 0:
-                continue
-
-            spine_vecs.append(self.trail_points[i - 1].pos - x.pos)
-
-        return spine_vecs
+        return [i.get_direction() for i in self.trail_points]
     
     def get_cw_acw_points(self, anchor, spine_vec, radius):
         scaled_vec = spine_vec.set_mag(radius)
@@ -119,9 +118,57 @@ class TailFin:
         self.fin_points.draw()
 
 
+class BodyFin:
+    NUM_T_STEPS = 50
+    T_STEP = 2 * math.pi / NUM_T_STEPS
+
+    COLOUR = (0, 255, 0)
+
+    ANGLE_OFFSET = math.radians(60)
+
+    A = 10
+    B = 5
+
+    def __init__(self, window, anchor_point):
+        self.window = window
+        self.anchor_point = anchor_point
+
+        self.ellipse_points = self.get_ellipse_points()
+
+    def get_ellipse_points(self):
+        ellipse_points = []
+        for i in range(BodyFin.NUM_T_STEPS):
+            t = BodyFin.T_STEP * i
+            ellipse_points.append(vector.Vec2(BodyFin.A * math.cos(t), BodyFin.B * math.sin(t)))
+
+        return ellipse_points
+    
+    def transform_ellipse_points(self):
+        anchor_pos = self.anchor_point.pos
+        anchor_angle = self.anchor_point.get_direction().get_angle_above_x_axis()
+        rot_angle = anchor_angle + BodyFin.ANGLE_OFFSET
+
+        transformed = []
+        for i in self.ellipse_points:
+            rotated = i.rot(rot_angle)
+            translated = rotated + anchor_pos
+
+            transformed.append(translated)
+
+        return transformed
+    
+    def draw(self):
+        vector_points = self.transform_ellipse_points()
+        coord_points = [i.get_int_pos() for i in vector_points]
+
+        pygame.draw.polygon(self.window, BodyFin.COLOUR, coord_points)
+
+
 class Fish:
     SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
     LENGTH = 42
+
+    BODY_FIN_ANCHOR_INX = 1
 
     DEFAULT_COLOUR = (255, 255, 255)
 
@@ -133,6 +180,7 @@ class Fish:
         self.head_point = self.create_head_point(pos)
         self.body = self.create_body()
         self.tail_fin = self.create_tail_fin()
+        self.body_fins = self.create_body_fins()
 
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
@@ -149,6 +197,13 @@ class Fish:
         tail_fin = TailFin(self.window, self.body.trail_points[-1])
 
         return tail_fin
+    
+    def create_body_fins(self):
+        #TODO: create 2
+        anchor = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX]
+        fin1 = BodyFin(self.window, anchor)
+
+        return fin1
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -159,6 +214,7 @@ class Fish:
         self.draw_head()
         self.body.draw()
         self.tail_fin.draw()
+        self.body_fins.draw()
 
     def update(self):
         self.update_head()

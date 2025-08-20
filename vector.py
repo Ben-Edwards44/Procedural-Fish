@@ -1,4 +1,4 @@
-from math import sqrt
+import math
 from random import uniform
 
 
@@ -29,7 +29,7 @@ class Vec2:
         return self.x * self.x + self.y * self.y
 
     def mag(self):
-        return sqrt(self.mag_sq())
+        return math.sqrt(self.mag_sq())
     
     def set_mag(self, desired_mag):
         scale = desired_mag / self.mag()
@@ -42,6 +42,9 @@ class Vec2:
             return self.set_mag(limit)
         else:
             return self
+       
+    def get_angle_above_x_axis(self):
+        return math.atan2(self.y, self.x)
     
     def rot90(self, positive):
         if positive:
@@ -51,6 +54,15 @@ class Vec2:
 
         new_x = -self.y * mult
         new_y = self.x * mult
+
+        return Vec2(new_x, new_y)
+    
+    def rot(self, angle):
+        c = math.cos(angle)
+        s = math.sin(angle)
+
+        new_x = self.x * c - self.y * s
+        new_y = self.x * s + self.y * c
 
         return Vec2(new_x, new_y)
     
