@@ -123,9 +123,9 @@ class TailFin:
 
 class BodyFin:
     NUM_T_STEPS = 20
-    T_STEP = math.pi / NUM_T_STEPS
+    T_STEP = math.pi * 1.5 / NUM_T_STEPS
 
-    COLOUR = (0, 255, 0)
+    COLOUR = (200, 0, 0)
 
     ANGLE_OFFSET = math.radians(60)
 
@@ -174,10 +174,10 @@ class BodyFin:
 
 
 class Fish:
-    SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
-    LENGTH = 64#42
+    SIZES = [6, 7, 7.5, 7.5, 7.25, 7, 6.5, 6, 5.5, 5, 4, 3, 2, 1]
+    LENGTH = 64
 
-    BODY_FIN_ANCHOR_INX = 1
+    BODY_FIN_ANCHOR_INX = 2
 
     DEFAULT_COLOUR = (255, 255, 255)
 
@@ -223,10 +223,10 @@ class Fish:
 
     def draw(self):
         self.draw_head()
-        self.body.draw()
         self.tail_fin.draw()
         self.left_fin.draw()
         self.right_fin.draw()
+        self.body.draw()
 
     def update(self):
         self.update_head()
