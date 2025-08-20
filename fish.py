@@ -13,7 +13,8 @@ class HeadPoint:
 
 
 class TrailPoint(HeadPoint):
-    def __init__(self, pos, radius, parent):
+    def __init__(self, size, pos, radius, parent):
+        self.size = size
         self.parent = parent
 
         super().__init__(pos, radius)
@@ -21,6 +22,12 @@ class TrailPoint(HeadPoint):
     def get_direction(self):
         #get the direction this point is pointing in
         return self.parent.pos - self.pos
+    
+    def get_outside_point(self, positive_rot):
+        scaled_vec = self.get_direction().set_mag(self.size)
+        perp_vec = scaled_vec.rot90(positive_rot)
+
+        return self.pos + perp_vec
 
     def update_pos(self):
         vec_to_parent = self.parent.pos - self.pos
@@ -43,39 +50,35 @@ class TrailPointString:
         parent = self.head_point
 
         trail_points = []
-        for _ in self.sizes:
+        for i in self.sizes:
             offset = vector.Vec2(-radius, 0)
-            new_point = TrailPoint(parent.pos + offset, radius, parent)
+            new_point = TrailPoint(i, parent.pos + offset, radius, parent)
             trail_points.append(new_point)
 
             parent = new_point
 
         return trail_points
-
-    def get_spine_vecs(self):
-        return [i.get_direction() for i in self.trail_points]
     
-    def get_cw_acw_points(self, anchor, spine_vec, radius):
-        scaled_vec = spine_vec.set_mag(radius)
+    def get_head_cw_acw_points(self):
+        pointing_dir = self.trail_points[0].get_direction()
 
-        cw = anchor + scaled_vec.rot90(False)
-        acw = anchor + scaled_vec.rot90(True)
+        scaled_vec = pointing_dir.set_mag(self.sizes[0])
+
+        cw = self.head_point.pos + scaled_vec.rot90(False)
+        acw = self.head_point.pos + scaled_vec.rot90(True)
 
         return cw, acw
 
     def draw(self):
-        spine_vecs = self.get_spine_vecs()
+        head_cw, head_acw = self.get_head_cw_acw_points()
 
         #add both sides of the head
-        head_cw, head_acw = self.get_cw_acw_points(self.head_point.pos, spine_vecs[0], self.sizes[0])
-
         cw_points = [head_cw.get_int_pos()]
         acw_points = [head_acw.get_int_pos()]
 
-        for i, x in enumerate(spine_vecs):
-            anchor = self.trail_points[i].pos
-
-            cw, acw = self.get_cw_acw_points(anchor, x, self.sizes[i])
+        for i in self.trail_points:
+            cw = i.get_outside_point(False)
+            acw = i.get_outside_point(True)
 
             cw_points.append(cw.get_int_pos())
             acw_points.append(acw.get_int_pos())
@@ -120,7 +123,7 @@ class TailFin:
 
 class BodyFin:
     NUM_T_STEPS = 50
-    T_STEP = 2 * math.pi / NUM_T_STEPS
+    T_STEP = math.pi / NUM_T_STEPS
 
     COLOUR = (0, 255, 0)
 
@@ -129,24 +132,29 @@ class BodyFin:
     A = 10
     B = 5
 
-    def __init__(self, window, anchor_point):
+    def __init__(self, window, anchor_point, positive_rot):
         self.window = window
         self.anchor_point = anchor_point
+        self.positive_rot = positive_rot
 
         self.ellipse_points = self.get_ellipse_points()
 
     def get_ellipse_points(self):
         ellipse_points = []
         for i in range(BodyFin.NUM_T_STEPS):
-            t = BodyFin.T_STEP * i
+            t = math.pi / 2 + BodyFin.T_STEP * i
             ellipse_points.append(vector.Vec2(BodyFin.A * math.cos(t), BodyFin.B * math.sin(t)))
 
         return ellipse_points
     
     def transform_ellipse_points(self):
-        anchor_pos = self.anchor_point.pos
+        anchor_pos = self.anchor_point.get_outside_point(self.positive_rot)
         anchor_angle = self.anchor_point.get_direction().get_angle_above_x_axis()
-        rot_angle = anchor_angle + BodyFin.ANGLE_OFFSET
+
+        if not self.positive_rot:
+            rot_angle = anchor_angle + BodyFin.ANGLE_OFFSET
+        else:
+            rot_angle = anchor_angle - BodyFin.ANGLE_OFFSET
 
         transformed = []
         for i in self.ellipse_points:
@@ -180,7 +188,7 @@ class Fish:
         self.head_point = self.create_head_point(pos)
         self.body = self.create_body()
         self.tail_fin = self.create_tail_fin()
-        self.body_fins = self.create_body_fins()
+        self.left_fin, self.right_fin = self.create_body_fins()
 
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
@@ -199,11 +207,12 @@ class Fish:
         return tail_fin
     
     def create_body_fins(self):
-        #TODO: create 2
         anchor = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX]
-        fin1 = BodyFin(self.window, anchor)
 
-        return fin1
+        left_fin = BodyFin(self.window, anchor, False)
+        right_fin = BodyFin(self.window, anchor, True)
+
+        return left_fin, right_fin
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -214,7 +223,8 @@ class Fish:
         self.draw_head()
         self.body.draw()
         self.tail_fin.draw()
-        self.body_fins.draw()
+        self.left_fin.draw()
+        self.right_fin.draw()
 
     def update(self):
         self.update_head()
