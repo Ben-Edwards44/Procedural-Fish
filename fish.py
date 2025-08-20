@@ -122,7 +122,7 @@ class TailFin:
 
 
 class BodyFin:
-    NUM_T_STEPS = 50
+    NUM_T_STEPS = 20
     T_STEP = math.pi / NUM_T_STEPS
 
     COLOUR = (0, 255, 0)
@@ -132,9 +132,10 @@ class BodyFin:
     A = 10
     B = 5
 
-    def __init__(self, window, anchor_point, positive_rot):
+    def __init__(self, window, anchor_point, rotation_point, positive_rot):
         self.window = window
         self.anchor_point = anchor_point
+        self.rotation_point = rotation_point  #should be the point in front of the anchor point
         self.positive_rot = positive_rot
 
         self.ellipse_points = self.get_ellipse_points()
@@ -149,12 +150,12 @@ class BodyFin:
     
     def transform_ellipse_points(self):
         anchor_pos = self.anchor_point.get_outside_point(self.positive_rot)
-        anchor_angle = self.anchor_point.get_direction().get_angle_above_x_axis()
+        rot_point_angle = self.rotation_point.get_direction().get_angle_above_x_axis()
 
         if not self.positive_rot:
-            rot_angle = anchor_angle + BodyFin.ANGLE_OFFSET
+            rot_angle = rot_point_angle + BodyFin.ANGLE_OFFSET
         else:
-            rot_angle = anchor_angle - BodyFin.ANGLE_OFFSET
+            rot_angle = rot_point_angle - BodyFin.ANGLE_OFFSET
 
         transformed = []
         for i in self.ellipse_points:
@@ -174,7 +175,7 @@ class BodyFin:
 
 class Fish:
     SIZES = [5, 5.5, 6, 5.5, 4.5, 4, 3, 2]
-    LENGTH = 42
+    LENGTH = 64#42
 
     BODY_FIN_ANCHOR_INX = 1
 
@@ -208,9 +209,10 @@ class Fish:
     
     def create_body_fins(self):
         anchor = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX]
+        rotation = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX - 1]
 
-        left_fin = BodyFin(self.window, anchor, False)
-        right_fin = BodyFin(self.window, anchor, True)
+        left_fin = BodyFin(self.window, anchor, rotation, False)
+        right_fin = BodyFin(self.window, anchor, rotation, True)
 
         return left_fin, right_fin
 
