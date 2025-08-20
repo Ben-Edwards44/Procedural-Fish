@@ -40,7 +40,7 @@ class Boid:
         desired_vel = total_vel / len(neighbours)
         vel_step = desired_vel - self.vel
 
-        return vel_step.set_mag(Boid.ALIGN_MAG)
+        return vel_step.limit_mag(Boid.ALIGN_MAG)
     
     def cohesion(self, neighbours):
         #steer to average position of neighbours
@@ -52,7 +52,7 @@ class Boid:
         desired_vel = desired_pos - self.pos
         vel_step = desired_vel - self.vel
 
-        return vel_step.set_mag(Boid.COHESION_MAG)
+        return vel_step.limit_mag(Boid.COHESION_MAG)
     
     def seperation(self, neighbours):
         #steer to avoid close neighbours
@@ -62,7 +62,7 @@ class Boid:
             scaled_mag = 1 / away_from_boid.mag()
             away_dir = away_dir + away_from_boid.set_mag(scaled_mag)
 
-        return away_dir.set_mag(Boid.SEPERATION_MAG)
+        return away_dir.limit_mag(Boid.SEPERATION_MAG)
     
     def update_new_vel(self):
         neighbours = self.get_neighbours()
@@ -70,7 +70,6 @@ class Boid:
         if len(neighbours) == 0:
             return
 
-        #TODO: experiment with limit_mag not set_mag!!!!
         align_step = self.alignment(neighbours)
         cohesion_step = self.cohesion(neighbours)
         seperation_step = self.seperation(neighbours)
