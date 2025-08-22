@@ -208,10 +208,12 @@ class BodyFin:
 class DorsalFin:
     COLOUR = (200, 200, 0)
 
-    CONST_PROPORTIONALITY = 100
+    CONST_PROPORTIONALITY = 30
 
     NUM_BEZIER_STEPS = 10
     STEP_SIZE = 1 / NUM_BEZIER_STEPS
+
+    MAX_MULT = 2
 
     def __init__(self, window, start_inx, mid_inx, end_inx, body):
         self.window = window
@@ -258,7 +260,9 @@ class DorsalFin:
     
     def get_outside_points(self):
         curvature = self.get_total_curvature()
+
         mult = abs(curvature) * DorsalFin.CONST_PROPORTIONALITY
+        mult = min(mult, DorsalFin.MAX_MULT)
 
         outside_point = self.mid_point.get_outside_point(curvature > 0)
         scaled_vec = (outside_point - self.mid_point.pos) * mult
