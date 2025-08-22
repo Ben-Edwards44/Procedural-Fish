@@ -2,6 +2,9 @@ import math
 from random import uniform
 
 
+EPSILON = 0.001
+
+
 class Vec2:
     def __init__(self, x, y):
         self.x = x
@@ -21,6 +24,9 @@ class Vec2:
     
     def __truediv__(self, scalar):
         return Vec2(self.x / scalar, self.y / scalar)
+    
+    def dot(self, other_vec):
+        return self.x * other_vec.x + self.y * other_vec.y
     
     def get_int_pos(self):
         return (int(self.x), int(self.y))
@@ -46,6 +52,25 @@ class Vec2:
     def get_angle_above_x_axis(self):
         return math.atan2(self.y, self.x)
     
+    def get_angle_to(self, other_vec):
+        if abs(self.x - other_vec.x) < EPSILON and abs(self.y - other_vec.y) < EPSILON:
+            #when the two vectors are the same, imprecision can cause the argument to acos() to be more than 1
+            return 0
+        else:
+            return math.acos(self.dot(other_vec) / (self.mag() * other_vec.mag()))
+    
+    def get_signed_angle_to(self, other_vec):
+        #anticlockwise is positive and clockwise is negative
+        abs_angle = self.get_angle_to(other_vec)
+        perp_vec = self.rot90(False)
+
+        if perp_vec.dot(other_vec) > 0:
+            mult = 1
+        else:
+            mult = -1
+
+        return abs_angle * mult
+
     def rot90(self, positive):
         if positive:
             mult = 1

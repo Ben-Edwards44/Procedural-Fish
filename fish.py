@@ -59,6 +59,21 @@ class TrailPointString:
 
         return trail_points
     
+    def get_total_curvature(self):
+        total_angle = 0
+        prev_dir = self.trail_points[0].get_direction()
+        for i in self.trail_points[1:]:
+            new_dir = i.get_direction()
+            total_angle += new_dir.get_signed_angle_to(prev_dir)
+            prev_dir = new_dir
+
+        num_angles = len(self.trail_points) - 1
+        avg_angle = total_angle / num_angles
+
+        normalised = avg_angle / math.pi
+
+        return normalised
+    
     def get_head_cw_acw_points(self):
         pointing_dir = self.trail_points[0].get_direction()
 
@@ -205,6 +220,64 @@ class BodyFin:
         pygame.draw.polygon(self.window, BodyFin.COLOUR, coord_points)
 
 
+class DorsalFin:
+    COLOUR = (200, 200, 0)
+
+    CONST_PROPORTIONALITY = 100
+
+    NUM_BEZIER_STEPS = 10
+    STEP_SIZE = 1 / NUM_BEZIER_STEPS
+
+    def __init__(self, window, body, mid_point):
+        self.window = window
+        self.body = body
+        self.mid_point = mid_point
+
+    def lerp(self, a, b, t):
+        return a + (b - a) * t
+    
+    def bezier_curve(self, points, t):
+        if len(points) == 1:
+            return points[0]
+        
+        lerped_points = []
+        for i, x in enumerate(points):
+            if i == 0:
+                continue
+
+            new_point = self.lerp(points[i - 1], x, t)
+            lerped_points.append(new_point)
+
+        return self.bezier_curve(lerped_points, t)
+
+    def get_body_points(self):
+        return [i.pos.get_int_pos() for i in self.body.trail_points]
+    
+    def get_outside_points(self):
+        curvature = self.body.get_total_curvature()
+        mult = abs(curvature) * DorsalFin.CONST_PROPORTIONALITY
+
+        outside_point = self.mid_point.get_outside_point(curvature > 0)
+        scaled_vec = (outside_point - self.mid_point.pos) * mult
+        apex = self.mid_point.pos + scaled_vec
+
+        bezier_points = [self.body.trail_points[0].pos, apex, self.body.trail_points[-1].pos]
+
+        outside_points = []
+        for i in range(DorsalFin.NUM_BEZIER_STEPS):
+            t = i * DorsalFin.STEP_SIZE
+            point_on_bezier = self.bezier_curve(bezier_points, t)
+            outside_points.append(point_on_bezier.get_int_pos())
+
+        return outside_points
+    
+    def draw(self):
+        body_points = self.get_body_points()
+        outside_points = self.get_outside_points()
+
+        pygame.draw.polygon(self.window, DorsalFin.COLOUR, body_points + outside_points[::-1])
+
+
 class Fish:
     SIZES = [6, 7, 7.5, 7.5, 7.25, 7, 6.5, 6, 5.5, 5, 4, 3, 2, 1]
     LENGTH = 64
@@ -223,6 +296,7 @@ class Fish:
         self.tail_fin = self.create_tail_fin()
         self.left_fin, self.right_fin = self.create_body_fins()
         self.eyes = self.create_eyes()
+        self.dorsal_fin = self.create_dorsal_fin()
 
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
@@ -253,6 +327,12 @@ class Fish:
         eyes = Eyes(self.window, self.head_point, self.body.trail_points[0])
 
         return eyes
+    
+    def create_dorsal_fin(self):
+        mid_point = self.body.trail_points[len(Fish.SIZES) // 2]
+        dorsal_fin = DorsalFin(self.window, self.body, mid_point)
+
+        return dorsal_fin
 
     def draw_head(self):
         radius = Fish.SIZES[0]
@@ -265,6 +345,7 @@ class Fish:
         self.left_fin.draw()
         self.right_fin.draw()
         self.body.draw()
+        self.dorsal_fin.draw()
         self.eyes.draw()
 
     def update(self):
