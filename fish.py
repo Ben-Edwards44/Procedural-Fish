@@ -59,21 +59,6 @@ class TrailPointString:
 
         return trail_points
     
-    def get_total_curvature(self):
-        total_angle = 0
-        prev_dir = self.trail_points[0].get_direction()
-        for i in self.trail_points[1:]:
-            new_dir = i.get_direction()
-            total_angle += new_dir.get_signed_angle_to(prev_dir)
-            prev_dir = new_dir
-
-        num_angles = len(self.trail_points) - 1
-        avg_angle = total_angle / num_angles
-
-        normalised = avg_angle / math.pi
-
-        return normalised
-    
     def get_head_cw_acw_points(self):
         pointing_dir = self.trail_points[0].get_direction()
 
@@ -228,10 +213,13 @@ class DorsalFin:
     NUM_BEZIER_STEPS = 10
     STEP_SIZE = 1 / NUM_BEZIER_STEPS
 
-    def __init__(self, window, body, mid_point):
+    def __init__(self, window, start_inx, mid_inx, end_inx, body):
         self.window = window
-        self.body = body
-        self.mid_point = mid_point
+        self.start_inx = start_inx
+        self.end_inx = end_inx
+
+        self.mid_point = body.trail_points[mid_inx]
+        self.trail_points = body.trail_points[self.start_inx : self.end_inx + 1]
 
     def lerp(self, a, b, t):
         return a + (b - a) * t
@@ -249,19 +237,34 @@ class DorsalFin:
             lerped_points.append(new_point)
 
         return self.bezier_curve(lerped_points, t)
+    
+    def get_total_curvature(self):
+        total_angle = 0
+        prev_dir = self.trail_points[0].get_direction()
+        for i in self.trail_points[1:]:
+            new_dir = i.get_direction()
+            total_angle += new_dir.get_signed_angle_to(prev_dir)
+            prev_dir = new_dir
+
+        num_angles = len(self.trail_points) - 1
+        avg_angle = total_angle / num_angles
+
+        normalised = avg_angle / math.pi
+
+        return normalised
 
     def get_body_points(self):
-        return [i.pos.get_int_pos() for i in self.body.trail_points]
+        return [i.pos.get_int_pos() for i in self.trail_points]
     
     def get_outside_points(self):
-        curvature = self.body.get_total_curvature()
+        curvature = self.get_total_curvature()
         mult = abs(curvature) * DorsalFin.CONST_PROPORTIONALITY
 
         outside_point = self.mid_point.get_outside_point(curvature > 0)
         scaled_vec = (outside_point - self.mid_point.pos) * mult
         apex = self.mid_point.pos + scaled_vec
 
-        bezier_points = [self.body.trail_points[0].pos, apex, self.body.trail_points[-1].pos]
+        bezier_points = [self.trail_points[0].pos, apex, self.trail_points[-1].pos]
 
         outside_points = []
         for i in range(DorsalFin.NUM_BEZIER_STEPS):
@@ -283,6 +286,10 @@ class Fish:
     LENGTH = 64
 
     BODY_FIN_ANCHOR_INX = 2
+
+    DORSAL_FIN_START_INX = 3
+    DORSAL_FIN_END_INX = 8
+    DORSAL_FIN_MID_INX = (DORSAL_FIN_START_INX + DORSAL_FIN_END_INX) // 2
 
     DEFAULT_COLOUR = (255, 255, 255)
 
@@ -329,8 +336,7 @@ class Fish:
         return eyes
     
     def create_dorsal_fin(self):
-        mid_point = self.body.trail_points[len(Fish.SIZES) // 2]
-        dorsal_fin = DorsalFin(self.window, self.body, mid_point)
+        dorsal_fin = DorsalFin(self.window, Fish.DORSAL_FIN_START_INX, Fish.DORSAL_FIN_MID_INX, Fish.DORSAL_FIN_END_INX, self.body)
 
         return dorsal_fin
 
