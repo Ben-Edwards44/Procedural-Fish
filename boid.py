@@ -1,4 +1,5 @@
 import vector
+from math import pi
 
 
 class Boid:
@@ -6,6 +7,7 @@ class Boid:
     COHESION_MAG = 0.3
     SEPERATION_MAG = 0.2
     VIEW_RADIUS_SQ = 60**2
+    FOV = 2 * pi / 3  #half of the range of view
 
     MAX_ACC = 0.01
     SPEED = 0.6
@@ -15,8 +17,8 @@ class Boid:
 
         self.all_boids = []  #set after all boids initialised
 
-        self.new_vel = vector.Vec2(0, 0)
         self.vel = vector.rand_vec(-1, 1)
+        self.new_vel = self.vel
 
     def get_neighbours(self):
         neighbours = []
@@ -24,9 +26,11 @@ class Boid:
             if i == self:
                 continue
 
-            dist_sq = (i.pos - self.pos).mag_sq()
+            vec_to_boid = (i.pos - self.pos)
+            dist_sq = vec_to_boid.mag_sq()
+            angle_to_boid = self.vel.get_angle_to(vec_to_boid)
 
-            if dist_sq < Boid.VIEW_RADIUS_SQ:
+            if dist_sq < Boid.VIEW_RADIUS_SQ and angle_to_boid < Boid.FOV:
                 neighbours.append(i)
 
         return neighbours
