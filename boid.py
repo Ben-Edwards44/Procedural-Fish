@@ -4,14 +4,14 @@ import vector
 class Boid:
     ALIGN_MAG = 0.1
     COHESION_MAG = 0.3
-    SEPERATION_MAG = 0.1
+    SEPERATION_MAG = 0.2
+    VIEW_RADIUS_SQ = 60**2
 
-    MAX_ACC = 0.001
-    SPEED = 0.2
+    MAX_ACC = 0.01
+    SPEED = 0.6
 
-    def __init__(self, pos, view_radius):
+    def __init__(self, pos):
         self.pos = pos
-        self.view_radius_sq = view_radius * view_radius
 
         self.all_boids = []  #set after all boids initialised
 
@@ -26,7 +26,7 @@ class Boid:
 
             dist_sq = (i.pos - self.pos).mag_sq()
 
-            if dist_sq < self.view_radius_sq:
+            if dist_sq < Boid.VIEW_RADIUS_SQ:
                 neighbours.append(i)
 
         return neighbours
@@ -81,6 +81,18 @@ class Boid:
     def update(self):
         self.vel = self.new_vel
         self.pos = self.pos + self.vel
+
+        #TODO: use consts
+        o = 80
+        if self.pos.x < -o:
+            self.pos.x = 500 + o
+        elif self.pos.x > 500 + o:
+            self.pos.x = -o
+
+        if self.pos.y < -o:
+            self.pos.y = 500 + o
+        elif self.pos.y > 500 + o:
+            self.pos.y = -o
 
 
 def set_all_boids(all_boids):
