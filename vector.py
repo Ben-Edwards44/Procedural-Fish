@@ -53,11 +53,13 @@ class Vec2:
         return math.atan2(self.y, self.x)
     
     def get_angle_to(self, other_vec):
-        if abs(self.x - other_vec.x) < EPSILON and abs(self.y - other_vec.y) < EPSILON:
-            #when the two vectors are the same, imprecision can cause the argument to acos() to be more than 1
-            return 0
-        else:
-            return math.acos(self.dot(other_vec) / (self.mag() * other_vec.mag()))
+        cos_angle = self.dot(other_vec) / (self.mag() * other_vec.mag())
+
+        #floating point imprecision can lead to cos being outside the correct range
+        cos_angle = max(-1, cos_angle)
+        cos_angle = min(1, cos_angle)
+        
+        return math.acos(cos_angle)
     
     def get_signed_angle_to(self, other_vec):
         #anticlockwise is positive and clockwise is negative
