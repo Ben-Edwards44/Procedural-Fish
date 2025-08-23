@@ -399,7 +399,7 @@ class PlayerFish(Fish):
 
     def create_dummy_boid(self):
         #create a boid object with same pos and vel as fish so non player fish interact with player fish
-        boid_obj = boid.Boid(self.head_point.pos)
+        boid_obj = boid.Boid(self.head_point.pos, self.window.get_width(), self.window.get_height())
 
         return boid_obj
     
@@ -424,7 +424,7 @@ class NonPlayerFish(Fish):
     def __init__(self, window, pos):
         super().__init__(window, pos, NonPlayerFish.CONFIG_FILENAME)
 
-        self.boid = boid.Boid(pos)
+        self.boid = boid.Boid(pos, self.window.get_width(), self.window.get_height())
 
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish

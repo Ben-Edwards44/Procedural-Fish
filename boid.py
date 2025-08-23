@@ -2,18 +2,30 @@ import vector
 from math import pi
 
 
+EPSILON = 0.001
+
+
 class Boid:
     ALIGN_MAG = 0.1
     COHESION_MAG = 0.3
     SEPERATION_MAG = 0.2
+
     VIEW_RADIUS_SQ = 60**2
     FOV = 2 * pi / 3  #half of the range of view
+
+    WALL_DIST_RATIO = 0.1
+    AVOID_CONST_PROPORTIONALITY = 1
 
     MAX_ACC = 0.01
     SPEED = 0.6
 
-    def __init__(self, pos):
+    def __init__(self, pos, screen_width, screen_height):
         self.pos = pos
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+
+        self.width_threshold = screen_width * Boid.WALL_DIST_RATIO
+        self.height_threshold = screen_height * Boid.WALL_DIST_RATIO
 
         self.all_boids = []  #set after all boids initialised
 
@@ -68,35 +80,52 @@ class Boid:
 
         return away_dir.limit_mag(Boid.SEPERATION_MAG)
     
+    def get_avoid_vec(self, dist, direction):
+        mult = Boid.AVOID_CONST_PROPORTIONALITY / dist
+        acc_vec = direction * mult
+
+        return acc_vec
+
+    def avoid_walls(self):
+        #steer away from the edge of the screen
+        dist_left = max(self.pos.x, EPSILON)
+        dist_right = max(self.screen_width - self.pos.x, EPSILON)
+
+        acc_x = vector.Vec2(0, 0)
+        if dist_left < self.width_threshold:
+            acc_x = self.get_avoid_vec(dist_left, vector.Vec2(1, 0))
+        elif dist_right < self.width_threshold:
+            acc_x = self.get_avoid_vec(dist_right, vector.Vec2(-1, 0))
+
+        dist_up = max(self.pos.y, EPSILON)
+        dist_down = max(self.screen_height - self.pos.y, EPSILON)
+
+        acc_y = vector.Vec2(0, 0)
+        if dist_up < self.height_threshold:
+            acc_y = self.get_avoid_vec(dist_up, vector.Vec2(0, 1))
+        elif dist_down < self.height_threshold:
+            acc_y = self.get_avoid_vec(dist_down, vector.Vec2(0, -1))
+
+        return acc_x + acc_y
+    
     def update_new_vel(self):
         neighbours = self.get_neighbours()
 
-        if len(neighbours) == 0:
-            return
+        acc = vector.Vec2(0, 0)
+        if len(neighbours) > 0:
+            align_step = self.alignment(neighbours)
+            cohesion_step = self.cohesion(neighbours)
+            seperation_step = self.seperation(neighbours)
 
-        align_step = self.alignment(neighbours)
-        cohesion_step = self.cohesion(neighbours)
-        seperation_step = self.seperation(neighbours)
+            acc = (align_step + cohesion_step + seperation_step).limit_mag(Boid.MAX_ACC)
 
-        acc = (align_step + cohesion_step + seperation_step).limit_mag(Boid.MAX_ACC)
+        acc = acc + self.avoid_walls()
 
         self.new_vel = (self.vel + acc).set_mag(Boid.SPEED)
 
     def update(self):
         self.vel = self.new_vel
         self.pos = self.pos + self.vel
-
-        #TODO: use consts
-        o = 80
-        if self.pos.x < -o:
-            self.pos.x = 500 + o
-        elif self.pos.x > 500 + o:
-            self.pos.x = -o
-
-        if self.pos.y < -o:
-            self.pos.y = 500 + o
-        elif self.pos.y > 500 + o:
-            self.pos.y = -o
 
 
 def set_all_boids(all_boids):
