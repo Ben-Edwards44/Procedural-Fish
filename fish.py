@@ -305,6 +305,8 @@ class DorsalFin:
 
 
 class Fish:
+    SHOW_EYES = False
+
     SIZES = [6, 7, 7.5, 7.5, 7.25, 7, 6.5, 6, 5.5, 5, 4, 3, 2, 1]
     LENGTH = 64
 
@@ -379,7 +381,9 @@ class Fish:
         self.right_fin.draw()
         self.body.draw()
         self.dorsal_fin.draw()
-        self.eyes.draw()
+
+        if Fish.SHOW_EYES:
+            self.eyes.draw()
 
     def update(self):
         self.update_head()
