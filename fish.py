@@ -175,7 +175,7 @@ class TailFin:
 
 
 class BodyFin:
-    NUM_T_STEPS = 20
+    NUM_T_STEPS = 10
     T_STEP = math.pi * 1.5 / NUM_T_STEPS
 
     ANGLE_OFFSET = math.radians(60)
@@ -228,7 +228,7 @@ class BodyFin:
 class DorsalFin:
     CONST_PROPORTIONALITY = 30
 
-    NUM_BEZIER_STEPS = 10
+    NUM_BEZIER_STEPS = 4
     STEP_SIZE = 1 / NUM_BEZIER_STEPS
 
     MAX_MULT = 2
@@ -390,7 +390,7 @@ class Fish:
 class PlayerFish(Fish):
     CONFIG_FILENAME = "player_fish.json"
 
-    SPEED = 0.6
+    SPEED = 1.5
 
     def __init__(self, window, pos):
         super().__init__(window, pos, PlayerFish.CONFIG_FILENAME)
