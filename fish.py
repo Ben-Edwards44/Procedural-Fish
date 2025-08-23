@@ -13,6 +13,8 @@ class HeadPoint:
 
 
 class TrailPoint(HeadPoint):
+    MAX_ANGLE = 0.5
+
     def __init__(self, size, pos, radius, parent):
         self.size = size
         self.parent = parent
@@ -28,6 +30,24 @@ class TrailPoint(HeadPoint):
         perp_vec = scaled_vec.rot90(positive_rot)
 
         return self.pos + perp_vec
+    
+    def check_sharp_angle(self):
+        if type(self.parent) == HeadPoint:
+            return
+    
+        vec_to_parent = self.parent.pos - self.pos
+        signed_angle = vec_to_parent.get_signed_angle_to(self.parent.get_direction())
+
+        if abs(signed_angle) > TrailPoint.MAX_ANGLE:
+            #turn is too sharp - rotate the point to be back to the minimum angle
+            if signed_angle < 0:
+                delta_theta = signed_angle + TrailPoint.MAX_ANGLE
+            else:
+                delta_theta = signed_angle - TrailPoint.MAX_ANGLE
+
+            new_vec_to_parent = vec_to_parent.rot(-delta_theta)
+
+            self.pos = self.parent.pos - new_vec_to_parent
 
     def update_pos(self):
         vec_to_parent = self.parent.pos - self.pos
@@ -35,6 +55,8 @@ class TrailPoint(HeadPoint):
         step = vec_to_parent.set_mag(step_length)
 
         self.pos = self.pos + step
+
+        self.check_sharp_angle()
 
 
 class TrailPointString:
