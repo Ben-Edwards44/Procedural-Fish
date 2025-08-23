@@ -6,9 +6,9 @@ import pygame
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 800
 
-FPS = 50
+FPS = 60
 
-NUM_FISH = 100  #excluding the player
+NUM_FISH = 80  #excluding the player
 
 
 pygame.init()
@@ -38,7 +38,6 @@ def main():
     clock = pygame.time.Clock()
     while True:
         clock.tick(FPS)
-        print(clock.get_fps())
 
         update(player_fish, non_player_fish)
         draw(player_fish, non_player_fish)

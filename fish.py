@@ -403,7 +403,7 @@ class PlayerFish(Fish):
 
     def create_dummy_boid(self):
         #create a boid object with same pos and vel as fish so non player fish interact with player fish
-        boid_obj = boid.Boid(self.head_point.pos, self.window.get_width(), self.window.get_height())
+        boid_obj = boid.Boid(self.head_point.pos, self.window.get_width(), self.window.get_height(), None)
 
         return boid_obj
     
@@ -426,10 +426,10 @@ class PlayerFish(Fish):
 class NonPlayerFish(Fish):
     CONFIG_FILENAME = "default_fish.json"
 
-    def __init__(self, window, pos):
+    def __init__(self, window, pos, player_fish):
         super().__init__(window, pos, NonPlayerFish.CONFIG_FILENAME)
 
-        self.boid = boid.Boid(pos, self.window.get_width(), self.window.get_height())
+        self.boid = boid.Boid(pos, self.window.get_width(), self.window.get_height(), player_fish.dummy_boid)
 
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish
@@ -460,7 +460,7 @@ def create_non_player_fish(window, num, player_fish):
         pos_x = uniform(0, width)
         pos_y = uniform(0, height)
 
-        fish = NonPlayerFish(window, vector.Vec2(pos_x, pos_y))
+        fish = NonPlayerFish(window, vector.Vec2(pos_x, pos_y), player_fish)
         all_fish.append(fish)
 
     set_all_fish_boids(all_fish, player_fish)

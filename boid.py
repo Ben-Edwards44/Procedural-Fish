@@ -8,30 +8,31 @@ EPSILON = 0.001
 class Boid:
     ALIGN_MAG = 0.1
     COHESION_MAG = 0.3
-    SEPERATION_MAG = 0.2
+    SEPERATION_MAG = 0.25
 
-    VIEW_RADIUS = 60
+    VIEW_RADIUS = 80
     VIEW_RADIUS_SQ = VIEW_RADIUS**2
     FOV = 2 * pi / 3  #half of the range of view
 
     WALL_DIST_RATIO = 0.1
-    AVOID_CONST_PROPORTIONALITY = 1
+
+    WALL_AVOID_CONST = 1
+    PLAYER_AVOID_CONST = 0.1
 
     MAX_ACC = 0.01
-    SPEED = 0.6
+    SPEED = 0.8
 
-    def __init__(self, pos, screen_width, screen_height):
+    def __init__(self, pos, screen_width, screen_height, player_boid):
         self.pos = pos
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.player_boid = player_boid
 
         self.width_threshold = screen_width * Boid.WALL_DIST_RATIO
         self.height_threshold = screen_height * Boid.WALL_DIST_RATIO
 
         self.num_grid_x = screen_width // Boid.VIEW_RADIUS + 1
         self.num_grid_y = screen_height // Boid.VIEW_RADIUS + 1
-
-        self.all_boids = []  #set after all boids initialised
 
         self.grid = []  #set after all boids initialised
 
@@ -60,7 +61,7 @@ class Boid:
         self.add_to_grid_cell(grid_pos)
 
     def is_neighbour(self, other_boid):
-        if other_boid == self:
+        if other_boid == self or other_boid == self.player_boid:
             return False
 
         vec_to_boid = (other_boid.pos - self.pos)
@@ -121,7 +122,7 @@ class Boid:
         return away_dir.limit_mag(Boid.SEPERATION_MAG)
     
     def get_avoid_vec(self, dist, direction):
-        mult = Boid.AVOID_CONST_PROPORTIONALITY / dist
+        mult = Boid.WALL_AVOID_CONST / dist
         acc_vec = direction * mult
 
         return acc_vec
@@ -148,6 +149,16 @@ class Boid:
 
         return acc_x + acc_y
     
+    def avoid_player(self):
+        vec_to_player = self.player_boid.pos - self.pos
+
+        avoid_vec = vector.Vec2(0, 0)
+        if vec_to_player.mag_sq() < Boid.VIEW_RADIUS_SQ:
+            mult = Boid.PLAYER_AVOID_CONST / vec_to_player.mag()
+            avoid_vec = vec_to_player * -mult
+
+        return avoid_vec
+    
     def update_new_vel(self):
         neighbours = self.get_neighbours()
 
@@ -159,7 +170,7 @@ class Boid:
 
             acc = (align_step + cohesion_step + seperation_step).limit_mag(Boid.MAX_ACC)
 
-        acc = acc + self.avoid_walls()
+        acc = acc + self.avoid_walls() + self.avoid_player()
 
         self.new_vel = (self.vel + acc).set_mag(Boid.SPEED)
 
@@ -181,7 +192,6 @@ def set_all_boids(all_boids):
     grid = [[[] for _ in range(all_boids[0].num_grid_y)] for _ in range(all_boids[0].num_grid_x)]
 
     for i in all_boids:
-        i.all_boids = all_boids
         i.init_grid(grid)
 
 

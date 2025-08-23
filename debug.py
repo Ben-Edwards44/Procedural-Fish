@@ -11,7 +11,8 @@ window = pygame.display.set_mode((500, 500))
 
 
 def boid_debug():
-    boids = [boid.Boid(vector.rand_vec(0, 500), 500, 500) for _ in range(40)]
+    player_boid = boid.Boid(vector.rand_vec(0, 500), 500, 500, None)
+    boids = [boid.Boid(vector.rand_vec(0, 500), 500, 500, player_boid) for _ in range(40)]
     boid.set_all_boids(boids)
 
     clock = pygame.time.Clock()
