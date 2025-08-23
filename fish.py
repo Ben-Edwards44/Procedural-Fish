@@ -3,6 +3,7 @@ import vector
 
 import math
 import pygame
+from json import loads
 from random import uniform
 
 
@@ -117,14 +118,13 @@ class Eyes:
 
     ANGLE = math.pi / 3
 
-    COLOUR = (0, 0, 255)
-
     RADIUS = 2
 
-    def __init__(self, window, head_point, first_trail_point):
+    def __init__(self, window, head_point, first_trail_point, colour):
         self.window = window
         self.head_point = head_point
         self.first_trail_point = first_trail_point
+        self.colour = colour
 
         self.dist_along = self.first_trail_point.size * Eyes.LENGTH_RATIO
 
@@ -140,19 +140,18 @@ class Eyes:
     def draw(self):
         pos1, pos2 = self.get_pos()
 
-        pygame.draw.circle(self.window, Eyes.COLOUR, pos1.get_int_pos(), Eyes.RADIUS)
-        pygame.draw.circle(self.window, Eyes.COLOUR, pos2.get_int_pos(), Eyes.RADIUS)
+        pygame.draw.circle(self.window, self.colour, pos1.get_int_pos(), Eyes.RADIUS)
+        pygame.draw.circle(self.window, self.colour, pos2.get_int_pos(), Eyes.RADIUS)
 
 
 class TailFin:
     SIZES = [1, 1.5, 2, 2.5]
     LENGTH_RATIO = 0.2
 
-    COLOUR = (0, 0, 255)
-
-    def __init__(self, window, head_point):
+    def __init__(self, window, head_point, colour):
         self.window = window
         self.head_point = head_point
+        self.colour = colour
 
         self.fin_points = self.create_fin_points()
 
@@ -164,7 +163,7 @@ class TailFin:
 
     def create_fin_points(self):
         radius = self.get_point_radius()
-        point_string = TrailPointString(self.window, self.head_point, TailFin.SIZES, radius, TailFin.COLOUR)
+        point_string = TrailPointString(self.window, self.head_point, TailFin.SIZES, radius, self.colour)
 
         return point_string
     
@@ -179,18 +178,17 @@ class BodyFin:
     NUM_T_STEPS = 20
     T_STEP = math.pi * 1.5 / NUM_T_STEPS
 
-    COLOUR = (200, 0, 0)
-
     ANGLE_OFFSET = math.radians(60)
 
     A = 10
     B = 5
 
-    def __init__(self, window, anchor_point, rotation_point, positive_rot):
+    def __init__(self, window, anchor_point, rotation_point, positive_rot, colour):
         self.window = window
         self.anchor_point = anchor_point
         self.rotation_point = rotation_point  #should be the point in front of the anchor point
         self.positive_rot = positive_rot
+        self.colour = colour
 
         self.ellipse_points = self.get_ellipse_points()
 
@@ -224,12 +222,10 @@ class BodyFin:
         vector_points = self.transform_ellipse_points()
         coord_points = [i.get_int_pos() for i in vector_points]
 
-        pygame.draw.polygon(self.window, BodyFin.COLOUR, coord_points)
+        pygame.draw.polygon(self.window, self.colour, coord_points)
 
 
 class DorsalFin:
-    COLOUR = (200, 200, 0)
-
     CONST_PROPORTIONALITY = 30
 
     NUM_BEZIER_STEPS = 10
@@ -237,10 +233,11 @@ class DorsalFin:
 
     MAX_MULT = 2
 
-    def __init__(self, window, start_inx, mid_inx, end_inx, body):
+    def __init__(self, window, start_inx, mid_inx, end_inx, body, colour):
         self.window = window
         self.start_inx = start_inx
         self.end_inx = end_inx
+        self.colour = colour
 
         self.mid_point = body.trail_points[mid_inx]
         self.trail_points = body.trail_points[self.start_inx : self.end_inx + 1]
@@ -304,7 +301,7 @@ class DorsalFin:
         body_points = self.get_body_points()
         outside_points = self.get_outside_points()
 
-        pygame.draw.polygon(self.window, DorsalFin.COLOUR, body_points + outside_points[::-1])
+        pygame.draw.polygon(self.window, self.colour, body_points + outside_points[::-1])
 
 
 class Fish:
@@ -317,12 +314,10 @@ class Fish:
     DORSAL_FIN_END_INX = 8
     DORSAL_FIN_MID_INX = (DORSAL_FIN_START_INX + DORSAL_FIN_END_INX) // 2
 
-    DEFAULT_COLOUR = (255, 255, 255)
-
-    def __init__(self, window, pos):
+    def __init__(self, window, pos, config_file):
         self.window = window
 
-        self.colour = Fish.DEFAULT_COLOUR
+        self.config = self.get_config(config_file)
 
         self.head_point = self.create_head_point(pos)
         self.body = self.create_body()
@@ -331,6 +326,12 @@ class Fish:
         self.eyes = self.create_eyes()
         self.dorsal_fin = self.create_dorsal_fin()
 
+    def get_config(self, filename):
+        file_data = read_file(filename)
+        config = loads(file_data)
+
+        return config
+
     def create_head_point(self, pos):
         num_radii = len(Fish.SIZES)
         head_radius = Fish.LENGTH / num_radii
@@ -338,12 +339,12 @@ class Fish:
         return HeadPoint(pos, head_radius)
     
     def create_body(self):
-        body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.colour)
+        body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.config["colours"]["body"])
 
         return body
     
     def create_tail_fin(self):
-        tail_fin = TailFin(self.window, self.body.trail_points[-1])
+        tail_fin = TailFin(self.window, self.body.trail_points[-1], self.config["colours"]["tail_fin"])
 
         return tail_fin
     
@@ -351,25 +352,25 @@ class Fish:
         anchor = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX]
         rotation = self.body.trail_points[Fish.BODY_FIN_ANCHOR_INX - 1]
 
-        left_fin = BodyFin(self.window, anchor, rotation, False)
-        right_fin = BodyFin(self.window, anchor, rotation, True)
+        left_fin = BodyFin(self.window, anchor, rotation, False, self.config["colours"]["body_fin"])
+        right_fin = BodyFin(self.window, anchor, rotation, True, self.config["colours"]["body_fin"])
 
         return left_fin, right_fin
     
     def create_eyes(self):
-        eyes = Eyes(self.window, self.head_point, self.body.trail_points[0])
+        eyes = Eyes(self.window, self.head_point, self.body.trail_points[0], self.config["colours"]["eyes"])
 
         return eyes
     
     def create_dorsal_fin(self):
-        dorsal_fin = DorsalFin(self.window, Fish.DORSAL_FIN_START_INX, Fish.DORSAL_FIN_MID_INX, Fish.DORSAL_FIN_END_INX, self.body)
+        dorsal_fin = DorsalFin(self.window, Fish.DORSAL_FIN_START_INX, Fish.DORSAL_FIN_MID_INX, Fish.DORSAL_FIN_END_INX, self.body, self.config["colours"]["dorsal_fin"])
 
         return dorsal_fin
 
     def draw_head(self):
         radius = Fish.SIZES[0]
 
-        pygame.draw.circle(self.window, self.colour, self.head_point.pos.get_int_pos(), radius)
+        pygame.draw.circle(self.window, self.config["colours"]["body"], self.head_point.pos.get_int_pos(), radius)
 
     def draw(self):
         self.draw_head()
@@ -387,14 +388,12 @@ class Fish:
 
 
 class PlayerFish(Fish):
+    CONFIG_FILENAME = "player_fish.json"
+
     SPEED = 0.6
-    COLOUR = (255, 0, 0)
 
     def __init__(self, window, pos):
-        super().__init__(window, pos)
-
-        self.colour = PlayerFish.COLOUR
-        self.body.colour = PlayerFish.COLOUR
+        super().__init__(window, pos, PlayerFish.CONFIG_FILENAME)
 
         self.dummy_boid = self.create_dummy_boid()
 
@@ -420,14 +419,23 @@ class PlayerFish(Fish):
 
 
 class NonPlayerFish(Fish):
+    CONFIG_FILENAME = "default_fish.json"
+
     def __init__(self, window, pos):
-        super().__init__(window, pos)
+        super().__init__(window, pos, NonPlayerFish.CONFIG_FILENAME)
 
         self.boid = boid.Boid(pos)
 
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish
         self.head_point.pos = self.boid.pos
+
+
+def read_file(filename):
+    with open(filename, "r") as file:
+        data = file.read()
+
+    return data
 
 
 def set_all_fish_boids(all_fish, player_fish):
