@@ -407,6 +407,7 @@ class PlayerFish(Fish):
         #ensure dummy boids attrs match the actual fish
         self.dummy_boid.pos = self.head_point.pos
         self.dummy_boid.vel = head_step
+        self.dummy_boid.update_grid_pos()
 
     def update_head(self):
         mouse_pos = vector.Vec2(*pygame.mouse.get_pos())

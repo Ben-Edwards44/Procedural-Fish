@@ -25,6 +25,9 @@ class Vec2:
     def __truediv__(self, scalar):
         return Vec2(self.x / scalar, self.y / scalar)
     
+    def __eq__(self, other_vec):
+        return self.x == other_vec.x and self.y == other_vec.y
+    
     def dot(self, other_vec):
         return self.x * other_vec.x + self.y * other_vec.y
     

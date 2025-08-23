@@ -10,7 +10,8 @@ class Boid:
     COHESION_MAG = 0.3
     SEPERATION_MAG = 0.2
 
-    VIEW_RADIUS_SQ = 60**2
+    VIEW_RADIUS = 60
+    VIEW_RADIUS_SQ = VIEW_RADIUS**2
     FOV = 2 * pi / 3  #half of the range of view
 
     WALL_DIST_RATIO = 0.1
@@ -27,23 +28,62 @@ class Boid:
         self.width_threshold = screen_width * Boid.WALL_DIST_RATIO
         self.height_threshold = screen_height * Boid.WALL_DIST_RATIO
 
+        self.num_grid_x = screen_width // Boid.VIEW_RADIUS + 1
+        self.num_grid_y = screen_height // Boid.VIEW_RADIUS + 1
+
         self.all_boids = []  #set after all boids initialised
+
+        self.grid = []  #set after all boids initialised
+
+        self.grid_pos = self.get_grid_pos()
 
         self.vel = vector.rand_vec(-1, 1)
         self.new_vel = self.vel
 
+    def get_grid_pos(self):
+        grid_x = int(self.pos.x / Boid.VIEW_RADIUS)
+        grid_y = int(self.pos.y / Boid.VIEW_RADIUS)
+
+        return vector.Vec2(grid_x, grid_y)
+    
+    def add_to_grid_cell(self, new_grid_pos):
+        new_cell = self.grid[new_grid_pos.x][new_grid_pos.y]
+        new_cell.append(self)  #add to new cell
+
+        self.grid_pos = new_grid_pos
+
+    def init_grid(self, grid):
+        #to be called once all boids initialised
+        self.grid = grid
+        grid_pos = self.get_grid_pos()
+
+        self.add_to_grid_cell(grid_pos)
+
+    def is_neighbour(self, other_boid):
+        if other_boid == self:
+            return False
+
+        vec_to_boid = (other_boid.pos - self.pos)
+        dist_sq = vec_to_boid.mag_sq()
+        angle_to_boid = self.vel.get_angle_to(vec_to_boid)
+
+        return dist_sq < Boid.VIEW_RADIUS_SQ and angle_to_boid < Boid.FOV
+    
     def get_neighbours(self):
         neighbours = []
-        for i in self.all_boids:
-            if i == self:
+        for i in range(-1, 2):
+            cell_x = self.grid_pos.x + i
+            if not 0 <= cell_x < self.num_grid_x:
                 continue
 
-            vec_to_boid = (i.pos - self.pos)
-            dist_sq = vec_to_boid.mag_sq()
-            angle_to_boid = self.vel.get_angle_to(vec_to_boid)
+            for x in range(-1, 2):
+                cell_y = self.grid_pos.y + x
+                if not 0 <= cell_y < self.num_grid_y:
+                    continue
 
-            if dist_sq < Boid.VIEW_RADIUS_SQ and angle_to_boid < Boid.FOV:
-                neighbours.append(i)
+                for boid in self.grid[cell_x][cell_y]:
+                    if self.is_neighbour(boid):
+                        neighbours.append(boid)
 
         return neighbours
     
@@ -123,14 +163,26 @@ class Boid:
 
         self.new_vel = (self.vel + acc).set_mag(Boid.SPEED)
 
+    def update_grid_pos(self):
+        #check if this boid has moved to a new grid cell
+        new_grid_pos = self.get_grid_pos()
+        if new_grid_pos != self.grid_pos:
+            self.grid[self.grid_pos.x][self.grid_pos.y].remove(self)  #remove from old cell
+            self.add_to_grid_cell(new_grid_pos)
+
     def update(self):
         self.vel = self.new_vel
         self.pos = self.pos + self.vel
 
+        self.update_grid_pos()
+
 
 def set_all_boids(all_boids):
+    grid = [[[] for _ in range(all_boids[0].num_grid_y)] for _ in range(all_boids[0].num_grid_x)]
+
     for i in all_boids:
         i.all_boids = all_boids
+        i.init_grid(grid)
 
 
 def update_all_boids(all_boids):

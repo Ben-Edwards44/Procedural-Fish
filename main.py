@@ -3,10 +3,12 @@ import vector
 import pygame
 
 
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 800
 
-FPS = 120
+FPS = 50
+
+NUM_FISH = 100  #excluding the player
 
 
 pygame.init()
@@ -31,11 +33,12 @@ def draw(player_fish, non_player_fish):
 
 def main():
     player_fish = fish.PlayerFish(window, vector.Vec2(250, 250))
-    non_player_fish = fish.create_non_player_fish(window, 30, player_fish)
+    non_player_fish = fish.create_non_player_fish(window, NUM_FISH, player_fish)
 
     clock = pygame.time.Clock()
     while True:
         clock.tick(FPS)
+        print(clock.get_fps())
 
         update(player_fish, non_player_fish)
         draw(player_fish, non_player_fish)
