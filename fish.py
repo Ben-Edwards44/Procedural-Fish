@@ -71,10 +71,10 @@ class TrailPointString:
 
     def create_horizontal_points(self, radius):
         parent = self.head_point
+        offset = vector.Vec2(-radius, 0)
 
         trail_points = []
         for i in self.sizes:
-            offset = vector.Vec2(-radius, 0)
             new_point = TrailPoint(i, parent.pos + offset, radius, parent)
             trail_points.append(new_point)
 
