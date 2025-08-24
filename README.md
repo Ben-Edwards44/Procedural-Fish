@@ -2,6 +2,8 @@
 
 > Procedurally animated fish
 
+*The gif may take time to load...*
+
 ![demo](./images/demo.gif)
 
 *The red fish follows your cursor*
