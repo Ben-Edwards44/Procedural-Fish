@@ -32,7 +32,7 @@ def draw(player_fish, non_player_fish):
 
 
 def main():
-    player_fish = fish.PlayerFish(window, vector.Vec2(250, 250))
+    player_fish = fish.PlayerFish(window, vector.Vec2(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
     non_player_fish = fish.create_non_player_fish(window, NUM_FISH, player_fish)
 
     clock = pygame.time.Clock()
