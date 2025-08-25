@@ -22,11 +22,14 @@ class Boid:
     MAX_ACC = 0.01
     SPEED = 0.8
 
-    def __init__(self, pos, screen_width, screen_height, player_boid):
+    def __init__(self, pos, screen_width, screen_height, player_boid, initial_vel):
         self.pos = pos
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.player_boid = player_boid
+
+        self.vel = initial_vel
+        self.new_vel = initial_vel
 
         self.width_threshold = screen_width * Boid.WALL_DIST_RATIO
         self.height_threshold = screen_height * Boid.WALL_DIST_RATIO
@@ -37,9 +40,6 @@ class Boid:
         self.grid = []  #set after all boids initialised
 
         self.grid_pos = self.get_grid_pos()
-
-        self.vel = vector.rand_vec(-1, 1)
-        self.new_vel = self.vel
 
     def get_grid_pos(self):
         grid_x = int(self.pos.x / Boid.VIEW_RADIUS)

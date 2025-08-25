@@ -61,17 +61,17 @@ class TrailPoint(HeadPoint):
 
 
 class TrailPointString:
-    def __init__(self, window, head_point, sizes, radius, colour):
+    def __init__(self, window, head_point, sizes, radius, direction_vec, colour):
         self.window = window
         self.head_point = head_point
         self.sizes = sizes
         self.colour = colour
 
-        self.trail_points = self.create_horizontal_points(radius)
+        self.trail_points = self.create_points(radius, direction_vec)
 
-    def create_horizontal_points(self, radius):
+    def create_points(self, radius, direction_vec):
         parent = self.head_point
-        offset = vector.Vec2(-radius, 0)
+        offset = direction_vec.set_mag(radius) * -1
 
         trail_points = []
         for i in self.sizes:
@@ -148,12 +148,12 @@ class TailFin:
     SIZES = [1, 1.5, 2, 2.5]
     LENGTH_RATIO = 0.2
 
-    def __init__(self, window, head_point, colour):
+    def __init__(self, window, head_point, colour, direction_vec):
         self.window = window
         self.head_point = head_point
         self.colour = colour
 
-        self.fin_points = self.create_fin_points()
+        self.fin_points = self.create_fin_points(direction_vec)
 
     def get_point_radius(self):
         total_length = TailFin.LENGTH_RATIO * Fish.LENGTH
@@ -161,9 +161,9 @@ class TailFin:
 
         return total_length / num_radii
 
-    def create_fin_points(self):
+    def create_fin_points(self, direction_vec):
         radius = self.get_point_radius()
-        point_string = TrailPointString(self.window, self.head_point, TailFin.SIZES, radius, self.colour)
+        point_string = TrailPointString(self.window, self.head_point, TailFin.SIZES, radius, direction_vec, self.colour)
 
         return point_string
     
@@ -321,6 +321,8 @@ class Fish:
 
         self.config = self.get_config(config_file)
 
+        self.initial_vel = vector.rand_vec(-1, 1)
+
         self.head_point = self.create_head_point(pos)
         self.body = self.create_body()
         self.tail_fin = self.create_tail_fin()
@@ -341,12 +343,12 @@ class Fish:
         return HeadPoint(pos, head_radius)
     
     def create_body(self):
-        body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.config["colours"]["body"])
+        body = TrailPointString(self.window, self.head_point, Fish.SIZES, self.head_point.radius, self.initial_vel, self.config["colours"]["body"])
 
         return body
     
     def create_tail_fin(self):
-        tail_fin = TailFin(self.window, self.body.trail_points[-1], self.config["colours"]["tail_fin"])
+        tail_fin = TailFin(self.window, self.body.trail_points[-1], self.config["colours"]["tail_fin"], self.initial_vel)
 
         return tail_fin
     
@@ -403,7 +405,7 @@ class PlayerFish(Fish):
 
     def create_dummy_boid(self):
         #create a boid object with same pos and vel as fish so non player fish interact with player fish
-        boid_obj = boid.Boid(self.head_point.pos, self.window.get_width(), self.window.get_height(), None)
+        boid_obj = boid.Boid(self.head_point.pos, self.window.get_width(), self.window.get_height(), None, self.initial_vel)
 
         return boid_obj
     
@@ -429,7 +431,7 @@ class NonPlayerFish(Fish):
     def __init__(self, window, pos, player_fish):
         super().__init__(window, pos, NonPlayerFish.CONFIG_FILENAME)
 
-        self.boid = boid.Boid(pos, self.window.get_width(), self.window.get_height(), player_fish.dummy_boid)
+        self.boid = boid.Boid(pos, self.window.get_width(), self.window.get_height(), player_fish.dummy_boid, self.initial_vel)
 
     def update_head(self):
         #NOTE: this does not actually update the boid pos, this must be done with update_all_non_player_fish
